@@ -65,7 +65,7 @@
  * \param membership Pointer to a vector, or a null pointer. If not a
  *        null pointer, then the membership vector of the optimal
  *        community structure is stored here.
- * \parm scores The input scores to use for the optimality (as vector).
+ * \param scores The input scores to use for the optimality (as vector).
  * \param weights Vector giving the weights of the edges. If it is
  *        \c NULL then each edge is supposed to have the same weight.
  * \return Error code.
@@ -92,7 +92,10 @@ int igraph_community_optimal(const igraph_t *graph,
     igraph_integer_t no_of_nodes = (igraph_integer_t) igraph_vcount(graph);
     igraph_integer_t no_of_edges = (igraph_integer_t) igraph_ecount(graph);
     igraph_bool_t directed = igraph_is_directed(graph);
+
+    /* No of variables divided by 2 for symmetry */
     int no_of_variables = no_of_nodes * (no_of_nodes + 1) / 2;
+
     int i, j, k, l, st;
     int idx[] = { 0, 0, 0, 0 };
     double coef[] = { 0.0, 1.0, 1.0, -2.0 };
@@ -103,7 +106,7 @@ int igraph_community_optimal(const igraph_t *graph,
 
 /* TODO
  * if (scores) {
- * if (igraph_matrix_size(scores) != no_of_edges * no_of_edges) {
+ * if (igraph_matrix_size(scores) != no_of_nodes * no_of_nodes) {
             IGRAPH_ERROR("Score Matrix Size must agree with number of nodes.", IGRAPH_EINVAL);
 	    }
  *
@@ -156,8 +159,6 @@ int igraph_community_optimal(const igraph_t *graph,
         }
     }
 
-
-
     IGRAPH_GLPK_SETUP();
 
     ip = glp_create_prob();
@@ -204,17 +205,19 @@ int igraph_community_optimal(const igraph_t *graph,
         }
     }
 
+
     /* objective function */
     {
         igraph_real_t c;
 
-        /* first part: -strength(i)*strength(j)/total_weight for every node pair */
+        /* first part: using the Matrix Score */
         for (i = 0; i < no_of_nodes; i++) {
             for (j = i + 1; j < no_of_nodes; j++) {
-                c = +MATRIX(scores)[i][j]
+		/* why i + 1 ? Because diag is always the same for all clustering, hence memory optimization */
+                c = +MATRIX(scores)[i][j] /* FIXME */
                 glp_set_obj_coef(ip, st + IDX(i, j), c);
             }
-            glp_set_obj_coef(ip, st + IDX(i, i), c);
+            glp_set_obj_coef(ip, st + IDX(i, i), c); /* TODO check */
         }
 
         /* second part: add the weighted adjacency matrix to the coefficient matrix */
