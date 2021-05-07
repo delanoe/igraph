@@ -65,6 +65,7 @@
  * \param membership Pointer to a vector, or a null pointer. If not a
  *        null pointer, then the membership vector of the optimal
  *        community structure is stored here.
+ * \parm scores The input scores to use for the optimality (as vector).
  * \param weights Vector giving the weights of the edges. If it is
  *        \c NULL then each edge is supposed to have the same weight.
  * \return Error code.
@@ -80,6 +81,7 @@
 int igraph_community_optimal(const igraph_t *graph,
                             igraph_real_t *modularity,
                             igraph_vector_t *membership,
+                            const igraph_matrix_t *scores,
                             const igraph_vector_t *weights) {
 
 #ifndef HAVE_GLPK
@@ -95,12 +97,17 @@ int igraph_community_optimal(const igraph_t *graph,
     int idx[] = { 0, 0, 0, 0 };
     double coef[] = { 0.0, 1.0, 1.0, -2.0 };
     igraph_real_t total_weight;
-    igraph_vector_t indegree;
-    igraph_vector_t outdegree;
 
     glp_prob *ip;
     glp_iocp parm;
 
+/* TODO
+ * if (scores) {
+ * if (igraph_matrix_size(scores) != no_of_edges * no_of_edges) {
+            IGRAPH_ERROR("Score Matrix Size must agree with number of nodes.", IGRAPH_EINVAL);
+	    }
+ *
+*/
     if (weights) {
         if (igraph_vector_size(weights) != no_of_edges) {
             IGRAPH_ERROR("Weight vector length must agree with number of edges.", IGRAPH_EINVAL);
@@ -149,12 +156,7 @@ int igraph_community_optimal(const igraph_t *graph,
         }
     }
 
-    IGRAPH_VECTOR_INIT_FINALLY(&indegree, no_of_nodes);
-    IGRAPH_VECTOR_INIT_FINALLY(&outdegree, no_of_nodes);
-    IGRAPH_CHECK(igraph_strength(graph, &indegree, igraph_vss_all(),
-                                 IGRAPH_IN, IGRAPH_LOOPS, weights));
-    IGRAPH_CHECK(igraph_strength(graph, &outdegree, igraph_vss_all(),
-                                 IGRAPH_OUT, IGRAPH_LOOPS, weights));
+
 
     IGRAPH_GLPK_SETUP();
 
@@ -209,12 +211,9 @@ int igraph_community_optimal(const igraph_t *graph,
         /* first part: -strength(i)*strength(j)/total_weight for every node pair */
         for (i = 0; i < no_of_nodes; i++) {
             for (j = i + 1; j < no_of_nodes; j++) {
-                c = -VECTOR(indegree)[i] * VECTOR(outdegree)[j] / total_weight \
-                    -VECTOR(outdegree)[i] * VECTOR(indegree)[j] / total_weight;
+                c = +MATRIX(scores)[i][j]
                 glp_set_obj_coef(ip, st + IDX(i, j), c);
             }
-            /* special case for (i,i) */
-            c = -VECTOR(indegree)[i] * VECTOR(outdegree)[i] / total_weight;
             glp_set_obj_coef(ip, st + IDX(i, i), c);
         }
 
@@ -269,8 +268,6 @@ int igraph_community_optimal(const igraph_t *graph,
 
 #undef IDX
 
-    igraph_vector_destroy(&indegree);
-    igraph_vector_destroy(&outdegree);
     glp_delete_prob(ip);
     IGRAPH_FINALLY_CLEAN(3);
 
