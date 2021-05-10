@@ -146,6 +146,7 @@ add_library(
   community/louvain.c
   community/modularity.c
   community/optimal_modularity.c
+  community/optimal.c
   community/spinglass/clustertool.cpp
   community/spinglass/NetDataTypes.cpp
   community/spinglass/NetRoutines.cpp
