@@ -38,6 +38,9 @@ project(
 # Include some compiler-related helpers and set global compiler options
 include(compilers)
 
+# CMAKE_POSITION_INDEPENDENT_CODE
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # Set default symbol visibility to hidden
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)

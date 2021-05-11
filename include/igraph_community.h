@@ -53,6 +53,12 @@ IGRAPH_EXPORT int igraph_community_optimal_modularity(const igraph_t *graph,
                                                       igraph_vector_t *membership,
                                                       const igraph_vector_t *weights);
 
+IGRAPH_EXPORT int igraph_community_optimal(const igraph_t *graph,
+                                          igraph_real_t *modularity,
+                                          igraph_vector_t *membership,
+                                          igraph_vector_t scores,
+                                          const igraph_vector_t *weights);
+
 IGRAPH_EXPORT int igraph_community_spinglass(const igraph_t *graph,
                                              const igraph_vector_t *weights,
                                              igraph_real_t *modularity,

@@ -81,7 +81,7 @@
 int igraph_community_optimal(const igraph_t *graph,
                             igraph_real_t *modularity,
                             igraph_vector_t *membership,
-                            const igraph_vector_t *scores,
+                            igraph_vector_t scores,
                             const igraph_vector_t *weights) {
 
 #ifndef HAVE_GLPK
@@ -214,7 +214,7 @@ int igraph_community_optimal(const igraph_t *graph,
         for (i = 0; i < no_of_nodes; i++) {
             for (j = i + 1; j < no_of_nodes; j++) {
 		/* why i + 1 ? Because diag is always the same for all clustering, hence memory optimization */
-                c = +VECTOR(*scores)[i*no_of_nodes + j];
+                c = +VECTOR(scores)[i*no_of_nodes + j];
                 glp_set_obj_coef(ip, st + IDX(i, j), c);
             }
             glp_set_obj_coef(ip, st + IDX(i, i), c); /* TODO check */
